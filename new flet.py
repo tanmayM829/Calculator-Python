@@ -1,15 +1,21 @@
 import flet as ft
 
+## Global Variables
 STACK = None
+extra_btns = [['(', ')', 'mc', 'm+', 'm-', 'mr'],
+    ['2\u207F\u1D48', 'x\u00B2', 'x\u00B3', 'x\u02B8', 'e\u02E3', '10\u02E3'],
+    ['x\u207B\u00B9', '\u221Ax', '\u221Bx', '\u207F\u221Ax', 'ln', 'log'],
+    ['x!', 'sin', 'cos', 'tan', '\U0001D452', 'EE'],
+    ['Rand', 'sinh', 'cosh', 'tanh', '\u03C0', 'Rad']]
 
 def calc(val : str):
     res = STACK.controls[0].controls[0].content.value
-    symbols = ['+', '-', '*', '/', '%', '.']
+    symbols = ['+', '-', '*', '/', '%', '.', '(', ')']
 
     if val.isdigit() or val in symbols:
         if res in ('0', 'Error'):
             res = val
-        elif res[-1] in symbols and val in symbols:
+        elif res[-1] in symbols[:5] and val in symbols[:5]: # to prevent double symbols
             res = res[:-1] + val
         else:
             res += val
@@ -34,25 +40,28 @@ def calc(val : str):
 
 
 def make_flet_btns(btns : list, btype : str | None = "standard") -> list:
+    style_info = {
+        "standard": {
+            "bg": lambda i, j: ft.Colors.ORANGE if j == 3 else ft.Colors.BLUE_GREY_100 if i == 0 else None,
+            "color": lambda i, j: ft.Colors.BLACK if j==3 or i==0 else ft.Colors.WHITE
+        },
+        "extended": {
+            "bg": lambda: ft.Colors.with_opacity(0.2, ft.Colors.BLACK_45),
+            "color": ft.Colors.WHITE
+        }
+    }
+
     buttons = []
     for i in range(len(btns)):
         row = []
         for j in range(len(btns[i])):
-            if btype == "standard":
-                if j == len(btns[i])-1: bg = ft.Colors.ORANGE
-                elif i == 0: bg = ft.Colors.BLUE_GREY_100
-                else: bg = None
-
-            elif btype == "extended":
-                bg = ft.Colors.with_opacity(0.2, ft.Colors.BLUE)
-
             row.append(ft.Button(
                 content=ft.Text(btns[i][j], size=18),
                 style=ft.ButtonStyle(
                     shape=ft.StadiumBorder(),
                     padding=10,
-                    bgcolor = bg,
-                    color = ft.Colors.BLACK if j == len(btns[i])-1 or i == 0 else ft.Colors.GREY_100
+                    bgcolor = style_info[btype]["bg"](i, j) if btype == "standard" else style_info[btype]["bg"](),
+                    color = style_info[btype]["color"](i, j) if btype == "standard" else style_info[btype]["color"]
                 ),
                 width=80,
                 height=40,
@@ -65,8 +74,10 @@ def make_flet_btns(btns : list, btype : str | None = "standard") -> list:
 def main(page : ft.Page):
     page.title = "Calculator App"
     page.window.height = 400
-    page.window.width = 1000
+    page.window.width = 950
     page.bgcolor = ""
+
+    global extra_btns, STACK
 
     btns = [['\u232B', 'AC', '%', "/"],
             ['7', '8', '9', '*'],
@@ -74,11 +85,7 @@ def main(page : ft.Page):
             ['1', '2', '3', '+'],
             ['+/-', '0', '.', '=']]
     
-    extra_btns = [['(', ')', 'mc', 'm+', 'm-', 'mr'],
-                  ['2\u207F\u1D48', 'x\u00B2', 'x\u00B3', 'A', 'B', 'C'],
-                  ['a', 'b', 'c', 'd', 'e', 'f'],
-                  ['a', 'b', 'c', 'd', 'e', 'f'],
-                  ['a', 'b', 'c', 'd', 'e', 'f']]
+    
     
 
     
@@ -122,7 +129,6 @@ def main(page : ft.Page):
 
     page.add(my_stack)
 
-    global STACK
     STACK = my_stack
     
 

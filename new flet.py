@@ -8,6 +8,9 @@ extra_btns = [['(', ')', 'mc', 'm+', 'm-', 'mr'],
     ['x!', 'sin', 'cos', 'tan', '\U0001D452', 'EE'],
     ['Rand', 'sinh', 'cosh', 'tanh', '\u03C0', 'Rad']]
 
+# When the user presses 2nd : sin,cos,tan,sinh,cosh,tanh gets converted to their inverse
+# e^x -> y^x ; 10^x -> 2^x ; ln -> log (base y) ; log -> log base 2
+
 def calc(val : str):
     res = STACK.controls[0].controls[0].content.value
     symbols = ['+', '-', '*', '/', '%', '.', '(', ')']

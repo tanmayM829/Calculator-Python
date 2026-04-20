@@ -1,25 +1,28 @@
 import flet as ft
+from classes import Calculator
 
 ## Global Variables
+calc = Calculator()
 STACK = None
-extra_btns = [['(', ')', 'mc', 'm+', 'm-', 'mr'],
-    ['2\u207F\u1D48', 'x\u00B2', 'x\u00B3', 'x\u02B8', 'e\u02E3', '10\u02E3'],
-    ['x\u207B\u00B9', '\u221Ax', '\u221Bx', '\u207F\u221Ax', 'ln', 'log'],
-    ['x!', 'sin', 'cos', 'tan', '\U0001D452', 'EE'],
-    ['Rand', 'sinh', 'cosh', 'tanh', '\u03C0', 'Rad']]
+MEMORY = {
+    "memory": None,
+    "ntype": 'deg' # can be rand/deg
+}
 
-# When the user presses 2nd : sin,cos,tan,sinh,cosh,tanh gets converted to their inverse
-# e^x -> y^x ; 10^x -> 2^x ; ln -> log (base y) ; log -> log base 2
-
-def calc(val : str):
+def calculate(val : str):
     res = STACK.controls[0].controls[0].content.value
     symbols = ['+', '-', '*', '/', '%', '.', '(', ')']
 
-    if val.isdigit() or val in symbols:
+    if val.isdigit() or val in symbols: # numbers or symbols
         if res in ('0', 'Error'):
             res = val
         elif res[-1] in symbols[:5] and val in symbols[:5]: # to prevent double symbols
             res = res[:-1] + val
+        elif val == '(':
+            if res[-1] in symbols[:5]: # there's a symbol
+                res += '('
+            else:
+                res += '*('
         else:
             res += val
 
@@ -29,7 +32,7 @@ def calc(val : str):
             res = str(eval(res))
 
         except: res = "Error"
-    elif val == '\u232B':
+    elif val == '\u232B': # delete btn
         if len(res) == 1: res = "0"
         else: res = res[:-1]
 
@@ -38,6 +41,13 @@ def calc(val : str):
     elif val == '+/-':
         res = '-' + res if res[0] != '-' else res[1:]
 
+    # Extended Buttons
+    memory_btns = ['mc', 'm+', 'm-', 'mr']
+    trigo_funcs = ['sin', 'cos', 'tan', 'sinh', 'cosh', 'tanh']
+    all_trig_funcs = trigo_funcs + [x+"\u207B\u00B9" for x in trigo_funcs] # \u207B\u00B9 is power -1
+
+    if val in all_trig_funcs:
+        pass
     
     STACK.controls[0].controls[0].content.value = res
 
@@ -49,8 +59,8 @@ def make_flet_btns(btns : list, btype : str | None = "standard") -> list:
             "color": lambda i, j: ft.Colors.BLACK if j==3 or i==0 else ft.Colors.WHITE
         },
         "extended": {
-            "bg": lambda: ft.Colors.with_opacity(0.2, ft.Colors.BLACK_45),
-            "color": ft.Colors.WHITE
+            "bg": lambda i, j: ft.Colors.with_opacity(0.2, ft.Colors.BLACK_45),
+            "color": lambda i, j: ft.Colors.WHITE
         }
     }
 
@@ -63,12 +73,12 @@ def make_flet_btns(btns : list, btype : str | None = "standard") -> list:
                 style=ft.ButtonStyle(
                     shape=ft.StadiumBorder(),
                     padding=10,
-                    bgcolor = style_info[btype]["bg"](i, j) if btype == "standard" else style_info[btype]["bg"](),
-                    color = style_info[btype]["color"](i, j) if btype == "standard" else style_info[btype]["color"]
+                    bgcolor = style_info[btype]["bg"](i, j),
+                    color = style_info[btype]["color"](i, j)
                 ),
                 width=80,
                 height=40,
-                on_click=lambda e, v=btns[i][j]: calc(v)
+                on_click=lambda e, v=btns[i][j]: calculate(v)
             ))
         buttons.append(ft.Row(row))
 
@@ -80,21 +90,11 @@ def main(page : ft.Page):
     page.window.width = 950
     page.bgcolor = ""
 
-    global extra_btns, STACK
-
-    btns = [['\u232B', 'AC', '%', "/"],
-            ['7', '8', '9', '*'],
-            ['4', '5', '6', '-'],
-            ['1', '2', '3', '+'],
-            ['+/-', '0', '.', '=']]
-    
-    
-    
-
+    global STACK
     
     res_field = ft.Container(
         content=ft.Text(
-            value="0",
+            value=calc.query,
             align=ft.Alignment.CENTER_RIGHT,
             color=ft.Colors.BLACK,
             size=24,
@@ -106,8 +106,8 @@ def main(page : ft.Page):
     )
 
 
-    buttons = make_flet_btns(btns)
-    extended_buttons = make_flet_btns(extra_btns, btype="extended")
+    buttons = make_flet_btns(calc.standard)
+    extended_buttons = make_flet_btns(calc.extended, btype="extended")
     
     standard_btns = ft.Container(
         content=ft.Column(buttons),
